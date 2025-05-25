@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <title>成长型思维测试-公开版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 1em; background: #fafafa; }
+    .progress { margin: 1em 0; }
+    .option-btn { display: block; width: 100%; margin: 0.5em 0; padding: 0.7em; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+    .option-btn:disabled { color: #aaa; border-color: #eee; background: #f5f5f5; }
+    .result { margin: 2em 0; }
+    .lottery-btn { margin: 1em 0; padding: 0.7em; width: 100%; }
+    .hidden { display: none; }
+    #timer { color: #888; font-size: 0.95em; margin-bottom: 1em; }
+  </style>
+</head>
+<body>
+  <h2>成长型思维测试</h2>
+  <div id="test-section">
+    <div class="progress" id="progress"></div>
+    <div id="question"></div>
+    <div id="options"></div>
+    <div id="timer"></div>
+  </div>
+  <div id="result-section" class="hidden"></div>
+  <div id="lottery-section" class="hidden">
+    <button class="lottery-btn" id="lottery-btn">点击参与班会抽奖</button>
+    <div id="lottery-result"></div>
+  </div>
+  <script>
+    // 25道题，正向题reverse:false，反向题reverse:true
+    const questions = [
+      { text: "我相信努力比天赋更重要。", reverse: false },
+      { text: "遇到挫折时，我认为这是提升自己的机会。", reverse: false },
+      { text: "我觉得有些人天生就比别人聪明。", reverse: true },
+      { text: "通过不断练习，我可以提升自己的能力。", reverse: false },
+      { text: "失败说明我不够聪明。", reverse: true },
+      { text: "我喜欢挑战自己不擅长的事情。", reverse: false },
+      { text: "有些能力是无法通过努力改变的。", reverse: true },
+      { text: "面对困难，我会寻找新的解决方法。", reverse: false },
+      { text: "别人批评我时，我会觉得自己很差劲。", reverse: true },
+      { text: "我相信每个人都可以通过努力进步。", reverse: false },
+      { text: "我害怕尝试新事物，因为可能会失败。", reverse: true },
+      { text: "我会从错误中学习并改进自己。", reverse: false },
+      { text: "天赋决定了一个人能取得多大成就。", reverse: true },
+      { text: "我愿意接受有挑战性的任务。", reverse: false },
+      { text: "遇到难题时，我容易放弃。", reverse: true },
+      { text: "我相信通过努力可以弥补不足。", reverse: false },
+      { text: "我觉得自己能力有限，难以改变。", reverse: true },
+      { text: "我喜欢向他人请教以提升自己。", reverse: false },
+      { text: "我认为失败是成长的机会。", reverse: false },
+      { text: "有些人注定无法取得好成绩。", reverse: true },
+      { text: "我会主动寻求反馈来改进自己。", reverse: false },
+      { text: "我觉得努力没有用，结果早已注定。", reverse: true },
+      { text: "我相信持续学习能让我变得更好。", reverse: false },
+      { text: "我常常因为害怕失败而不敢尝试。", reverse: true },
+      { text: "我愿意花时间提升自己的能力。", reverse: false }
+    ];
+    const analysis = [
+      { min: 90, text: "您展现出极端成长型思维，面对挑战和失败时总能积极看待，善于从经验中学习和成长。" },
+      { min: 70, text: "您总体上具备成长型思维，但在面对某些困难时可能还会有些犹豫，建议继续保持积极心态。" },
+      { min: 40, text: "您的思维偏向固定型，建议尝试多关注努力和成长的价值，逐步培养成长型思维。" },
+      { min: 0,  text: "您目前为极端固定型思维，建议多了解成长型思维的益处，勇于尝试和改变。" }
+    ];
+    const options = [
+      "非常同意", "同意", "一般", "不同意", "非常不同意"
+    ];
+    let current = 0, score = 0, answers = [];
+    let canAnswer = false, timer = null, timeLeft = 3;
+
+    function showQuestion() {
+      if (current >= questions.length) return showResult();
+      document.getElementById('progress').textContent = `${current+1}/${questions.length}题`;
+      document.getElementById('question').textContent = questions[current].text;
+      const opts = document.getElementById('options');
+      opts.innerHTML = '';
+      canAnswer = false;
+      timeLeft = 3;
+      document.getElementById('timer').textContent = `请思考后作答（${timeLeft}秒）`;
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').textContent = timeLeft > 0 ? `请思考后作答（${timeLeft}秒）` : '';
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          canAnswer = true;
+          renderOptions();
+        }
+      }, 1000);
+      renderOptions(true);
+    }
+    function renderOptions(disabled) {
+      const opts = document.getElementById('options');
+      opts.innerHTML = '';
+      for (let i = 0; i < options.length; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = options[i];
+        btn.className = 'option-btn';
+        btn.disabled = disabled;
+        btn.onclick = () => selectOption(i+1);
+        opts.appendChild(btn);
+      }
+    }
+    function selectOption(val) {
+      if (!canAnswer) return;
+      clearInterval(timer);
+      // 正向题：非常同意=5分，反向题反向计分
+      let q = questions[current];
+      let point = q.reverse ? 6 - val : val;
+      answers.push(point);
+      score += point;
+      current++;
+      showQuestion();
+    }
+    function showResult() {
+      document.getElementById('test-section').classList.add('hidden');
+      let type = '', report = '';
+      for (let a of analysis) {
+        if (score >= a.min) { type = a; break; }
+      }
+      document.getElementById('result-section').innerHTML =
+        `<div class='result'>您的类型：${type.text.includes('成长型') ? type.text.match(/(成长型|固定型)/)[0] : '未知'}（${score}分）<br>分析：${type.text}</div>
+        <button class='lottery-btn' onclick='showLottery()'>点击参与班会抽奖</button>`;
+      document.getElementById('result-section').classList.remove('hidden');
+    }
+    function showLottery() {
+      document.getElementById('result-section').classList.add('hidden');
+      document.getElementById('lottery-section').classList.remove('hidden');
+    }
+    document.getElementById('lottery-btn').onclick = function() {
+      this.disabled = true;
+      let r = Math.random();
+      let msg = '';
+      if (r < 0.1) msg = '恭喜获得奶茶券！🎉';
+      else if (r < 0.6) msg = '恭喜获得糖果！🍬';
+      else msg = '谢谢参与！';
+      document.getElementById('lottery-result').textContent = msg + '\\n班会结束，感谢您的参与！';
+    };
+    // 隐私声明
+    let privacy = document.createElement('div');
+    privacy.style.fontSize = '0.95em';
+    privacy.style.color = '#888';
+    privacy.style.marginTop = '2em';
+    privacy.textContent = '所有回答仅在本地前端处理，不会被收集或上传，完全匿名。';
+    document.body.appendChild(privacy);
+    // 启动
+    showQuestion();
+  </script>
+</body>
+</html>
